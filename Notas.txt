@@ -303,3 +303,271 @@ Quando um utilizador tem a conta bloqueada, é alertado para esse facto, quando 
 É necessário criar uma página de consulta para auditar os logins de todos os utilizadores.
 Após o primeiro login, pede ao utilizador para alterar a password.
 
+-------------
+using System;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+
+namespace BibliotecaSkilliana_M2.Cliente
+{
+    public partial class FormVerClientes : Form
+    {
+        string cs = ConfigurationManager.ConnectionStrings["LibSkilliana_EduardoMoreno"].ConnectionString;
+        SqlConnection con;
+        SqlCommand cmd;
+        SqlDataAdapter adapter;
+        DataTable dt;
+
+        public FormVerClientes()
+        {
+            InitializeComponent();
+        }
+
+        private void FormVerClientes_Load(object sender, EventArgs e)
+        {
+            LoadClients();
+            AddDeleteButtonColumn();
+        }
+
+        private void LoadClients()
+        {
+            try
+            {
+                using (con = new SqlConnection(cs))
+                {
+                    con.Open();
+                    string query = @"
+                SELECT 
+                    client_id, 
+                    first_name, 
+                    last_name, 
+                    taxpayer_number, 
+                    address, 
+                    email, 
+                    phone_number, 
+                    state, 
+                    registration_date 
+                FROM clients";
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    adapter.Fill(dt);
+
+                    dataGridClients.DataSource = dt;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao carregar Clientes: " + ex.Message);
+            }
+        }
+
+        private void DeleteClient(int rowIndex)
+        {
+            try
+            {
+                using (con = new SqlConnection(cs))
+                {
+                    con.Open();
+                    int clientId = Convert.ToInt32(dataGridClients.Rows[rowIndex].Cells["client_id"].Value);
+                    string query = "DELETE FROM clients WHERE client_id = @client_id";
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    cmd.Parameters.AddWithValue("@client_id", clientId);
+                    cmd.ExecuteNonQuery();
+
+                    MessageBox.Show("Cliente apagado com sucesso!");
+                    LoadClients(); // Recarrega os clientes para atualizar o DataGridView
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao apagar o cliente: " + ex.Message);
+            }
+        }
+
+        private void AddDeleteButtonColumn()
+        {
+            DataGridViewButtonColumn btnDeleteColumn = new DataGridViewButtonColumn();
+            btnDeleteColumn.HeaderText = "Apagar";
+            btnDeleteColumn.Name = "btnDelete";
+            btnDeleteColumn.Text = "Apagar";
+            btnDeleteColumn.UseColumnTextForButtonValue = true;
+
+            dataGridClients.Columns.Add(btnDeleteColumn);
+        }
+
+        private void dataGridClients_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex == dataGridClients.Columns["btnDelete"].Index && e.RowIndex >= 0)
+            {
+                var confirmResult = MessageBox.Show("Tem a certeza de que pretende apagar este cliente?",
+                                                     "Confirmar Eliminação",
+                                                     MessageBoxButtons.YesNo);
+                if (confirmResult == DialogResult.Yes)
+                {
+                    DeleteClient(e.RowIndex);
+                }
+            }
+        }
+
+        private void btnAdicionarCliente_Click(object sender, EventArgs e)
+        {
+            using (FormRegistrarCliente formRegistrarCliente = new FormRegistrarCliente())
+            {
+                formRegistrarCliente.ShowDialog();
+                LoadClients(); // Recarrega os clientes após adicionar um novo cliente
+            }
+        }
+
+        private void btnEditarCliente_Click(object sender, EventArgs e)
+        {
+            if (dataGridClients.SelectedRows.Count > 0)
+            {
+                int clientId = Convert.ToInt32(dataGridClients.SelectedRows[0].Cells["client_id"].Value);
+                using (FormEditarCliente formEditarCliente = new FormEditarCliente(clientId))
+                {
+                    formEditarCliente.ShowDialog();
+                    LoadClients(); // Recarrega os clientes após editar
+                }
+            }
+            else
+            {
+                MessageBox.Show("Selecione um cliente para editar.");
+            }
+        }
+    }
+}
+-----------------------------------------
+using System;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+
+namespace BibliotecaSkilliana_M2.Organizadores
+{
+    public partial class FormVerOrganizers : Form
+    {
+        string cs = ConfigurationManager.ConnectionStrings["LibSkilliana_EduardoMoreno"].ConnectionString;
+        SqlConnection con;
+        SqlCommand cmd;
+        SqlDataAdapter adapter;
+        DataTable dt;
+
+        public FormVerOrganizers()
+        {
+            InitializeComponent();
+        }
+
+        private void FormVerOrganizers_Load(object sender, EventArgs e)
+        {
+            LoadOrganizers();
+            AddDeleteButtonColumn();
+        }
+
+        private void LoadOrganizers()
+        {
+            try
+            {
+                using (con = new SqlConnection(cs))
+                {
+                    con.Open();
+                    string query = @"
+                SELECT 
+                    organizer_id, 
+                    name, 
+                    locality, 
+                    taxpayer_number 
+                FROM organizers";
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    adapter.Fill(dt);
+
+                    dataGridOrganizers.DataSource = dt;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao carregar Organizadores: " + ex.Message);
+            }
+        }
+
+        private void DeleteOrganizer(int rowIndex)
+        {
+            try
+            {
+                using (con = new SqlConnection(cs))
+                {
+                    con.Open();
+                    int organizerId = Convert.ToInt32(dataGridOrganizers.Rows[rowIndex].Cells["organizer_id"].Value);
+                    string query = "DELETE FROM organizers WHERE organizer_id = @organizer_id";
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    cmd.Parameters.AddWithValue("@organizer_id", organizerId);
+                    cmd.ExecuteNonQuery();
+
+                    MessageBox.Show("Organizador apagado com sucesso!");
+                    LoadOrganizers(); // Recarrega os organizadores para atualizar o DataGridView
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao apagar o organizador: " + ex.Message);
+            }
+        }
+
+        private void AddDeleteButtonColumn()
+        {
+            DataGridViewButtonColumn btnDeleteColumn = new DataGridViewButtonColumn();
+            btnDeleteColumn.HeaderText = "Apagar";
+            btnDeleteColumn.Name = "btnDelete";
+            btnDeleteColumn.Text = "Apagar";
+            btnDeleteColumn.UseColumnTextForButtonValue = true;
+
+            dataGridOrganizers.Columns.Add(btnDeleteColumn);
+        }
+
+        private void dataGridOrganizers_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex == dataGridOrganizers.Columns["btnDelete"].Index && e.RowIndex >= 0)
+            {
+                var confirmResult = MessageBox.Show("Tem a certeza de que pretende apagar este organizador?",
+                                                     "Confirmar Eliminação",
+                                                     MessageBoxButtons.YesNo);
+                if (confirmResult == DialogResult.Yes)
+                {
+                    DeleteOrganizer(e.RowIndex);
+                }
+            }
+        }
+
+        private void btnAdicionarOrganizer_Click(object sender, EventArgs e)
+        {
+            using (FormRegistrarOrganizer formRegistrarOrganizer = new FormRegistrarOrganizer())
+            {
+                formRegistrarOrganizer.ShowDialog();
+                LoadOrganizers(); // Recarrega os organizadores após adicionar um novo organizador
+            }
+        }
+
+        private void btnEditarOrganizer_Click(object sender, EventArgs e)
+        {
+            if (dataGridOrganizers.SelectedRows.Count > 0)
+            {
+                int organizerId = Convert.ToInt32(dataGridOrganizers.SelectedRows[0].Cells["organizer_id"].Value);
+                using (FormEditarOrganizer formEditarOrganizer = new FormEditarOrganizer(organizerId))
+                {
+                    formEditarOrganizer.ShowDialog();
+                    LoadOrganizers(); // Recarrega os organizadores após editar
+                }
+            }
+            else
+            {
+                MessageBox.Show("Selecione um organizador para editar.");
+            }
+        }
+    }
+}
+
